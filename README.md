@@ -480,90 +480,158 @@ Run `gradlew :frontend-ui-module:ui` to auto-generate routes and menus from `vie
 
 ### Prerequisites
 
-1. **JDK 17+**: [OpenJDK](https://openjdk.org/) or Oracle JDK
-2. **Gradle 8+**: [Installation Guide](https://gradle.org/install/)
-3. **IntelliJ IDEA 2022+**: [Download](https://www.jetbrains.com/idea/)
-4. **ApiHug IDEA Plugin**: [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/23534-apihug--api-design-copilot)
-5. **Node.js 18+** (frontend): [Download](https://nodejs.org/)
-6. **pnpm** (frontend): `npm install -g pnpm`
+| # | Requirement | Details |
+|---|-------------|---------|
+| 1 | ✅ **JDK 17+** | [OpenJDK](https://openjdk.org/) or Oracle JDK |
+| 2 | ✅ **Gradle 8+** | [Installation Guide](https://gradle.org/install/) |
+| 3 | ✅ **IDEA 2022+** | (Optional) [Download](https://www.jetbrains.com/idea/) |
+| 4 | ✅ **ApiHug Plugin** | [ApiHug - API design Copilot](https://plugins.jetbrains.com/plugin/23534-apihug--api-design-copilot) |
+| 5 | ✅ **Spring Initializr** | Accessible or [local deployment alternatives](https://start.spring.io/) |
 
-### Quick Start
+---
 
-#### 1. Initialize Backend Project
+### Quick Start (15 Minutes)
 
-Use [Spring Initializr](https://start.spring.io/) with ApiHug dependencies or the ApiHug Starter:
+Follow the official [ApiHug Getting Started Guide](https://apihug.github.io/docs/start) to create your first ApiHug project.
 
+#### Step 1: One-Click Initialization
+
+Transform an empty directory into an ApiHug workspace with a single command.
+
+**Windows (PowerShell):**
+```powershell
+iex (irm 'https://raw.githubusercontent.com/apihug/apihug.github.io/main/helper/apihug-install.ps1')
+```
+
+**Windows (Command Prompt):**
+```cmd
+powershell -c "irm https://raw.githubusercontent.com/apihug/apihug.github.io/main/helper/apihug-install.ps1 | iex"
+```
+
+**Linux/macOS (Bash):**
 ```bash
-# Option 1: ApiHug Framework Starter
-# Visit: https://apihug.github.io/docs/start
-
-# Option 2: Manual setup
-git clone <your-project-template>
-cd your-project
+curl -fsSL https://raw.githubusercontent.com/apihug/apihug.github.io/main/helper/apihug-install.sh | bash
 ```
 
-#### 2. Configure hope-wire.json
+---
 
-Create `src/main/resources/hope-wire.json`:
+#### Step 2: Install IDEA Plugin （Optional）
 
-```json
-{
-  "packageName": "com.example.user",
-  "domain": "user",
-  "application": "user-app",
-  "authority": {
-    "enumClass": "com.example.user.infra.UserAuthorityEnum",
-    "codePrefix": 10240000
-  }
-}
+1. **File** → **Settings** → **Plugins**
+2. Search for **ApiHug**
+3. Click **Install** & Restart IDEA
+
+---
+
+#### Step 3: Create New Project
+
+1. **File** → **New** → **Project** → **ApiHug**
+2. Configure project settings:
+   - Package name
+   - Project name
+   - Description
+   - SDK settings
+   - Version
+   - DB Vendor
+   - Cache
+   - Port
+
+> 💡 **Tip:** Keep default settings for your first project!
+
+**Project Structure:**
+```
+order/                          # (1) Project root
+├── order-app/                  # (2) Protocol module: API Definition  & Application module: Implementation & Service
 ```
 
-#### 3. Design Proto Files
+---
 
+#### Step 4: Spring Configuration
+
+Configure Spring Initializr settings:
+1. Select project type
+2. Choose dependencies (e.g., Spring Web)
+3. Click **Create** → **Open Project**
+
+---
+
+#### Step 5: Build & Run
+
+**5.1 Wire Task** (compile proto definitions)
 ```bash
-mkdir -p src/main/proto/com/example/user/{api,domain,infra}
-```
+# In project root
+./gradlew clean build -x test -x wireTest```
 
-Create your first proto:
-- `api/user_service.proto`: API definitions
-- `domain/user_entity.proto`: Database entities
-- `infra/user_constant.proto`: Enums
-- `infra/user_error.proto`: Error codes
+Check generated code: `demo-app/src/generated/main/wire/`
 
-#### 4. Generate Code
 
+**5.2 Run Application**
 ```bash
-# Generate all ApiHug artifacts (Controller, Entity, Repository, ServiceImpl skeleton)
-./gradlew :user-app:wire
-
-# Or build entire project (includes wire generation)
-./gradlew :user-app:build
+./gradlew demo-app:bootRun
 ```
 
-#### 5. Implement Business Logic
+**Expected Output:**
+```
+----------------------------------------------------------
+Application 'demo-app' is running! Access URLs:
 
-- Fill `ServiceImpl` method bodies
-- Extend Repository trait with custom queries
-- Define error handling with `HopeErrorDetailException`
-
-#### 6. Generate Frontend SDK (Optional)
-
-```bash
-# Generate TypeScript SDK, routes, and menus
-./gradlew :admin-app:ui
+Local                             http://localhost:18089/
+External                          http://192.168.0.115:18089/
+OAS                               http://192.168.0.115:18089/v3/api-docs
+Actuator                          http://192.168.0.115:18089/management
+Api-Errors                        http://192.168.0.115:18089/hope/meta/errors
+Api-Dictionaries                  http://192.168.0.115:18089/hope/meta/dictionaries
+Api-Authorities                   http://192.168.0.115:18089/hope/meta/authorities
+Profile(s)                        dev
+----------------------------------------------------------
 ```
 
-#### 7. Run Application
-
-```bash
-# Backend
-./gradlew :user-app:bootRun
-
-# Frontend
-cd apps/admin-app
-pnpm install
-pnpm dev
+**5.4 Verify OAS (OpenAPI Specification)**
 ```
+Copy the /v3/api-docs URL from console and open in browser
+```
+
+---
+
+#### Step 6: ApiHug Tool Window
+
+The **ApiHug Tool Window** should dock on the right side of IDEA. If not visible:
+- Go to menu: **ApiHug** → **ApiHug Designer**
+
+---
+
+### Project Layout Reference
+
+
+#### Backend
+**Critical rule:** Everything under `src/generated/` = generated code = NEVER modify manually.
+
+| Directory                    | Purpose                                  | Writable       |
+|------------------------------|------------------------------------------|----------------|
+| `src/main/proto/`            | Proto source (API/Domain/Constant DSL)   | YES            |
+| `src/main/java/`             | Handwritten business logic (ServiceImpl) | YES            |
+| `src/main/trait/`            | Repository extensions (custom queries)   | YES            |
+| `src/main/resources/`        | Config (hope-wire.json, application.yml) | YES            |
+| `src/generated/main/api/`    | Generated REST & Service interfaces      | NO — READ-ONLY |
+| `src/generated/main/domain/` | Generated domain models (Entity)         | NO — READ-ONLY |
+| `src/generated/main/wire/`   | Generated DTOs,Enums,Errors              | NO — READ-ONLY |
+
+#### Frontend
+| Directory                | Writable | Purpose               |
+|--------------------------|----------|-----------------------|
+| `apps/{app}/src/views/`  | ✅        | Page components       |
+| `packages/{module}-sdk/` | ❌        | Generated API service |
+| `apps/{app}/src/router/` | ❌        | Generated routes      |
+
+---
+
+### Next Steps
+
+After completing the quick start:
+1. Explore the [ApiHug REPL](https://apihug.github.io/docs/tool/apihug-repl) for interactive development
+2. Read the [API Extension Guide](rules/apihug-proto-api-extension-guide.md) for API design patterns
+3. Study the [Database Modeling Guide](rules/apihug-proto-database-modeling-guide.md) for entity definitions
+4. Review the [Backend Golden Rules](rules/apihug-impl-golden-rule.md) for implementation standards
 
 ---
 
