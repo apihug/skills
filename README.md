@@ -558,14 +558,17 @@ Configure Spring Initializr settings:
 #### Step 5: Build & Run
 
 **5.1 Wire Task** (compile proto definitions)
+
 ```bash
 # In project root
-./gradlew clean build -x test -x wireTest```
+./gradlew clean build -x test -x wireTest
+```
 
 Check generated code: `demo-app/src/generated/main/wire/`
 
 
 **5.2 Run Application**
+
 ```bash
 ./gradlew demo-app:bootRun
 ```
