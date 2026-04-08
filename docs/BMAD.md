@@ -33,3 +33,10 @@ BMAD [Workflow Map](https://docs.bmad-method.org/reference/workflow-map/)
 The `project-context.md` file, located at `{project-root}/docs/project-context.md`, serves as your project's implementation guide for AI agents. Similar to a “constitution” in other development systems, it documents the rules, patterns, and preferences that ensure consistent code generation across all workflows (see [Project Context](https://docs.bmad-method.org/explanation/project-context/)). 
 
 For existing projects, you can generate this file by running the `bmad-bmm-generate-project-context` workflow.
+
+
+## Reference
+
+1.  About BMAD: https://docs.bmad-method.org/             
+2.  GitHub: https://github.com/bmad-code-org/BMAD-METHOD/  
+3.  Invoke the `bmad-help` skill in your IDE Agent to get started    
