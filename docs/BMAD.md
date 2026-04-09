@@ -11,7 +11,7 @@ Since BMAD [6.0](https://docs.bmad-method.org/roadmap/) all move to skill Archit
 
 | Phase          | Workflow                              | Purpose                                                          | Produces                             |
 |----------------|---------------------------------------|------------------------------------------------------------------|--------------------------------------|
-| Analysis       | `bmad-create-product-brief`           | Capture strategic vision                                         | `product-brief.md`                   |
+| Analysis       | `bmad-product-brief`                  | Capture strategic vision                                         | `product-brief.md`                   |
 | Plan           | `bmad-create-prd`                     | Define requirements (FRs/NFRs)                                   | `PRD.md`                             |
 | Solutioning    | `bmad-create-architecture`            | Make technical decisions explicit                                | `architecture.md` with ADRs          |
 | Solutioning    | `bmad-create-epics-and-stories`       | Break requirements into implementable work                       | Epic files with stories              |
