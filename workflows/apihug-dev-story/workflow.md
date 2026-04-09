@@ -75,6 +75,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
 - `module_name` = `{hope_wire}:name`
 - `domain_name` = `{hope_wire}:domain`
 - `application_name` = `{hope_wire}:application`
+- `apiRoot` = `{hope_wire}:apiRoot`
 
 ### Backend Paths
 

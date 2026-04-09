@@ -40,6 +40,8 @@
   <critical>NEVER duplicate code values within same enum</critical>
   <critical>NEVER use numeric values for enum fields — use enum names: http_status: NOT_FOUND</critical>
   <critical>NEVER add any duplicate inline comment if the description is already sufficient; maintain code clarity and conciseness.</critical>
+  <critical>NEVER define duplicate API path with a prefix that duplicates {apiRoot} if it is already defined</critical>
+
 
   <!-- Implementation Core Constraints -->
   <critical>FORBIDDEN remove existing class-level documentation; appending new content is permitted, but the original must remain intact.</critical>
