@@ -39,6 +39,7 @@
   <critical>Table names MUST have prefix: SYS_, BIZ_, CFG_, LOG_ — avoid reserved words</critical>
   <critical>NEVER duplicate code values within same enum</critical>
   <critical>NEVER use numeric values for enum fields — use enum names: http_status: NOT_FOUND</critical>
+  <critical>NEVER add any duplicate inline comment if the description is already sufficient; maintain code clarity and conciseness.</critical>
 
   <!-- Implementation Core Constraints -->
   <critical>FORBIDDEN remove existing class-level documentation; appending new content is permitted, but the original must remain intact.</critical>
@@ -57,6 +58,7 @@
   <critical>ALWAYS define errors with code, http_status, phase, severity</critical>
   <critical>ALWAYS put query logic in Repository trait</critical>
   <critical>ALWAYS use HopeContextHolder.customer() for current user</critical>
+  <critical>ALWAYS add `date_format` for date/datetime/time kind fields explicitly</critical>
 
   <!-- Execution Constraints -->
   <critical>Execute ALL steps in exact order; do NOT skip steps</critical>
