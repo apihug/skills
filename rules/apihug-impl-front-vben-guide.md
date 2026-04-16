@@ -30,6 +30,7 @@ If an older example conflicts with this guide, follow this guide.
 - Do not manually edit generated SDK files under `packages/@sdk/{domain}-{module}/src/api`, `src/types`, `src/model`, or `src/schema`.
 - Do not use `fetch`, `axios`, or `requestClient` in feature code. Use generated services only.
 - Do not call `configureApiClient` in pages or components. App bootstrap already does that.
+- Do not modify any code in `packages/@sdk` (these are generated files).
 - In `admin-center`, use `#/adapter/form` and `#/adapter/vxe-table`.
 - For grid search forms, use `formOptions`. Do not use VXE `formConfig`.
 - For generated schema:
