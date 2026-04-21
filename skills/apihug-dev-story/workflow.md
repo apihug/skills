@@ -81,8 +81,8 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
 ### Backend Paths
 
 - `meta_index` = `{module_path}/src/main/resources/apihug.idx.csv`
-- `rules` = `{project-root}/_bmad/rules/rules.csv`
-- `rules_path` = `{project-root}/_bmad/rules`
+- `rules` = `{project-root}/_bmad/apihug/rules/rules.csv`
+- `rules_path` = `{project-root}/_bmad/apihug/rules`
 
 #### Proto Paths
 

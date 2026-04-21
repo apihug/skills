@@ -15,7 +15,7 @@ Map Proto RPCs to REST APIs with OpenAPI/Swagger generation.
 
 - **Extension packages**: `apihug/protobuf/swagger/swagger.proto` + `annotations.proto`
 - **Scope**: Service / Method (rpc) / Message / Field
-- **Source**: `{project-root}/_bmad/protobuf/` (swagger, mock, extend, domain)
+- **apihug Proto extension source code**: `{project-root}/_bmad/apihug/protobuf/` (swagger, mock, extend, domain)
 
 
 ## MANDATORY EXECUTION RULES (READ FIRST):

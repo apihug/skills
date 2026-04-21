@@ -49,7 +49,7 @@ YOU MUST ALWAYS SPEAK OUTPUT in your Agent communication style with the config `
 
 ### Rules (loaded during review)
 
-- `rules_path` = `{project-root}/_bmad/rules`
+- `rules_path` = `{project-root}/_bmad/apihug/rules`
 - `apihug_impl_golden_rule` = `{rules_path}/apihug-impl-golden-rule.md`
 - `apihug_impl_front_vben_guide` = `{rules_path}/apihug-impl-front-vben-guide.md`
 

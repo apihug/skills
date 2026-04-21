@@ -38,8 +38,8 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
 
 ### Rules (reference-only, loaded in Step 5)
 
-- `rules` = `{project-root}/_bmad/rules/rules.csv`
-- `rules_path` = `{project-root}/_bmad/rules`
+- `rules` = `{project-root}/_bmad/apihug/rules/rules.csv`
+- `rules_path` = `{project-root}/_bmad/apihug/rules`
 - `apihug_proto_api_extension_guide` = `{rules_path}/apihug-proto-api-extension-guide.md`
 - `apihug_proto_database_modeling_guide` = `{rules_path}/apihug-proto-database-modeling-guide.md`
 - `apihug_proto_enum_error_extension_guide` = `{rules_path}/apihug-proto-enum-error-extension-guide.md`

@@ -48,7 +48,7 @@ YOU MUST ALWAYS SPEAK OUTPUT in your Agent communication style with the config `
 
 ### Rules (loaded during review)
 
-- `rules_path` = `{project-root}/_bmad/rules`
+- `rules_path` = `{project-root}/_bmad/apihug/rules`
 - `apihug_proto_api_extension_guide` = `{rules_path}/apihug-proto-api-extension-guide.md`
 - `apihug_proto_database_modeling_guide` = `{rules_path}/apihug-proto-database-modeling-guide.md`
 - `apihug_proto_enum_error_extension_guide` = `{rules_path}/apihug-proto-enum-error-extension-guide.md`

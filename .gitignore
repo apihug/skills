@@ -72,6 +72,12 @@ classes/
 out/
 push-god.bat
 
+.cursor/
+.codex/
+.agents/
+.qoder/
+temp/
+
 ######################
 # Visual Studio Code
 ######################

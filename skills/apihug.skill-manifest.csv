@@ -1,0 +1,5 @@
+canonicalId,name,description,module,path,install_to_bmad
+"apihug-create-story","apihug-create-story","Creates a comprehensive ApiHug story file with all context needed for dev agent implementation.","apihug","_bmad/apihug/skills/apihug-create-story/SKILL.md","true"
+"apihug-dev-story","apihug-dev-story","Execute ApiHug story implementation (backend + optional frontend) following BMAD story spec with Contract-First proto design.","apihug","_bmad/apihug/skills/apihug-dev-story/SKILL.md","true"
+"apihug-impl-review","apihug-impl-review","Review implementation code against ApiHug golden rules. Checks ServiceImpl, Repository, DomainService for architecture/security/pattern violations.","apihug","_bmad/apihug/skills/apihug-impl-review/SKILL.md","true"
+"apihug-proto-review","apihug-proto-review","Review existing proto files against ApiHug proto design rules. Checks API/Database/Enum/Error proto definitions for constraint violations.","apihug","_bmad/apihug/skills/apihug-proto-review/SKILL.md","true"
