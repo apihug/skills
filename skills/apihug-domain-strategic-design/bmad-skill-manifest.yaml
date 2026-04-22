@@ -1,0 +1,10 @@
+name: apihug-domain-strategic-design
+type: strategic-design
+outputs:
+  - docs/planning-artifacts/context-map.md
+resources:
+  - references/output-contract.md
+  - references/review-checklist.md
+  - references/finalization-standard.md
+  - references/prompt-pack.md
+  - templates/context-map-template.md

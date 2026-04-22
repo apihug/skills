@@ -1,0 +1,17 @@
+name: apihug-domain-tactical-design
+type: skill
+outputs:
+  - docs/planning-artifacts/domains/<domain>/tactical-design.md
+  - docs/planning-artifacts/domains/<domain>/01-events-commands-terms.md
+  - docs/planning-artifacts/domains/<domain>/02-domain-rules.md
+  - docs/planning-artifacts/domains/<domain>/03-uml.md
+  - docs/planning-artifacts/domains/<domain>/04-glossary.md
+  - docs/planning-artifacts/domains/<domain>/05-architecture1.md
+  - docs/planning-artifacts/domains/<domain>/06-physical-data-model.md
+resources:
+  - references/output-contract.md
+  - references/review-checklist.md
+  - references/project-bootstrap.md
+  - references/finalization-standard.md
+  - references/prompt-pack.md
+  - templates/tactical-design-template.md
