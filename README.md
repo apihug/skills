@@ -93,10 +93,10 @@ skills/
 │   │   └── steps/                     # Implementation phases
 │   ├── apihug-proto-review/           # Proto design review skill
 │   ├── apihug-impl-review/            # Implementation review skill
-│   └── apihug.skill-manifest.csv      # Skill registry
 │   └── apihug-domain-strategic-design # Create or refine a DDD strategic design context-map.md
 │   └── apihug-domain-tactical-design  # Generate, review, and refine domain tactical design documents
 │   └── apihug-docs-readme             # Initialize or update docs/README.md 
+│   └── apihug.skill-manifest.csv      # Skill registry
 └── spring-extension/                  # Spring framework integration modules
     ├── it-common-spring.md            # Base abstractions (Customer, SecurityContext)
     ├── it-common-spring-core.md       # Exception handling, validation, aspects
