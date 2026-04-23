@@ -1,9 +1,9 @@
 ---
 name: apihug-impl-front-vben-guide
 description: Current frontend development rules for APIHug Vben UI modules.
-version: 2.1.0
+version: 2.2.0
 author: APIHug Team / H.O.P.E. Infra
-updated: 2026-04-16
+updated: 2026-04-23
 audience: code agents and frontend developers
 ---
 
@@ -55,6 +55,9 @@ The generated business SDK is different:
 Running `gradlew :{ui_module}:ui` generates these important outputs:
 
 - `apps/{app}/src/router/routes/modules/*.ts`
+- `apps/{app}/src/menus/index.ts`
+- `apps/{app}/src/menus/menu.json`
+- `apps/{app}/src/locales/langs/{lang}/page.json`
 - `packages/@sdk/{domain}-{module}/src/api/*.ts`
 - `packages/@sdk/{domain}-{module}/src/types/*.ts`
 - `packages/@sdk/{domain}-{module}/src/model/*.ts`
@@ -64,6 +67,10 @@ Running `gradlew :{ui_module}:ui` generates these important outputs:
 
 Meaning:
 
+- `router/routes/modules/`: generated route modules, grouped by first path segment
+- `menus/index.ts`: generated frontend menu tree using `$t(i18key)`
+- `menus/menu.json`: generated raw menu payload for external/backend usage
+- `locales/langs/{lang}/page.json`: generated page i18n namespace
 - `api/`: generated service methods
 - `types/`: DTO types
 - `model/`: enums, authorities, errors
@@ -88,6 +95,12 @@ defineOptions({ meta: { ... } })
 ```
 
 If `meta` is missing, no route is generated for that file.
+
+The generator treats page `defineOptions({ name, meta })` as the single source of truth for:
+
+- route path and route meta
+- menu title/i18key
+- page locale placeholders under `page.json`
 
 ### 4.2 Path mapping
 
@@ -130,12 +143,83 @@ Notes:
 - `meta.order` controls route/menu ordering.
 - `meta.path` can override the default path when needed.
 - `hidden: true` is treated as `hideInMenu: true`.
+- `meta.title` must be a static string literal. Do not use `$t(...)`, computed values, or runtime expressions in `defineOptions`.
+- Give every page a stable unique `name`. Do not reuse the same `name` across pages.
+
+Good:
+
+```vue
+<script setup lang="ts">
+defineOptions({
+  name: 'KnowledgeDetail',
+  meta: {
+    path: '/operator/knowledge/:id',
+    title: 'Knowledge Detail',
+    hideInMenu: true,
+  },
+});
+</script>
+```
+
+Bad:
+
+```vue
+<script setup lang="ts">
+defineOptions({
+  name: 'KnowledgeDetail',
+  meta: {
+    path: '/operator/knowledge/:id',
+    title: $t('page.operator.knowledge.id.title'),
+  },
+});
+</script>
+```
+
+### 4.4 Current route/menu/i18n contract
+
+Current generator behavior is:
+
+- route modules, menu modules, and page i18n are generated from the same discovered page tree
+- top-level routes are grouped by the first path segment such as `system`, `operator`, `monitoring`
+- menu ordering follows `meta.order`
+- menu visibility follows `hideInMenu` / `hidden`
+- route `meta.title` in generated files is always emitted as `$t(i18key)`
+- `page.json` keeps the actual plain title text
+
+That means the page author writes plain titles in `defineOptions`, while generated outputs transform them into:
+
+- `router`: `meta.title: $t('page.xxx.title')`
+- `menu`: `$t('page.xxx.title')`
+- `i18n`: `"page.xxx.title": "Plain Title"`
+
+### 4.5 Dynamic route i18key rules
+
+Dynamic segments are part of the i18key contract and must not collapse onto the list page key.
+
+Examples:
+
+- `/operator/knowledge` -> `page.operator.knowledge.title`
+- `/operator/knowledge/:id` -> `page.operator.knowledge.id.title`
+- `/system/user/:id` -> `page.system.user.id.title`
+
+Do not assume `/foo` and `/foo/:id` can share the same i18key.
+
+### 4.6 Locale merge rules
+
+When generating `apps/{app}/src/locales/langs/{lang}/page.json`:
+
+- recurse through all generated children, not only the top-level group nodes
+- preserve existing translated values when the key already exists
+- only add missing placeholders for newly discovered routes
+- keep root group titles stable; do not overwrite them with `null`
+
+This is important because the generator must be safe to run repeatedly in a real project without destroying hand-edited translations.
 
 ## 5. HTTP And SDK Rules
 
 ### 5.1 Do not call the HTTP client directly
 
-The app already configures `@hope/api` in `apps/{app}/src/client.ts` and calls it from `bootstrap.ts`.
+The app should configure `@hope/api` during bootstrap before feature pages call generated services.
 
 Feature code should only call generated services.
 
@@ -194,7 +278,7 @@ RoleService.searchRoles(filters, {
 
 ### 5.4 Grid return shape
 
-In the current `admin-center` sample, `src/adapter/vxe-table.ts` maps VXE proxy response fields to:
+In the default VXE adapter mapping used by this guide, proxy response fields are:
 
 - `list: data`
 - `total: totalCount`
@@ -219,12 +303,12 @@ Use:
 - `toVbenFormSchema(...)` from `@hope/api-antd-adapter`
 - `toVxeTableColumns(...)` from `@hope/api-antd-adapter`
 
-In `admin-center`, prefer:
+Prefer app-local wrappers for Vben integration:
 
-- `useVbenForm` from `#/adapter/form`
-- `useVbenVxeGrid` from `#/adapter/vxe-table`
+- `useVbenForm` from your local form adapter wrapper
+- `useVbenVxeGrid` from your local VXE grid adapter wrapper
 
-Do not use `toAntdTableColumns(...)` for `admin-center` table pages.
+Do not use `toAntdTableColumns(...)` for VXE table pages.
 
 Current customization surface:
 
@@ -253,7 +337,7 @@ Current customization surface:
 - `ui.widget` when provided by schema
 - merged `ui.props` into `componentProps`
 
-Current built-in component names aligned with `admin-center`:
+Current built-in component names expected by the default Vben form mapping:
 
 - `Input`
 - `InputNumber`
@@ -290,7 +374,7 @@ Use request schema to build the form, then submit with the generated service.
 ```ts
 import { reactive } from 'vue';
 
-import { useVbenForm } from '#/adapter/form';
+import { useVbenForm } from '<local-form-adapter>';
 import { toVbenFormSchema } from '@hope/api-antd-adapter';
 import { RoleService } from '@sdk/{domain}-{module}/api';
 import { RequestSchema } from '@sdk/{domain}-{module}/schema';
@@ -316,7 +400,7 @@ async function handleSubmit() {
 Use request schema for search, response schema for columns, and return raw `PageableResult<T>` from the service.
 
 ```ts
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '<local-vxe-grid-adapter>';
 import { toVbenFormSchema, toVxeTableColumns } from '@hope/api-antd-adapter';
 import { RoleService } from '@sdk/{domain}-{module}/api';
 import { RequestSchema, ResponseSchema } from '@sdk/{domain}-{module}/schema';
@@ -459,18 +543,22 @@ When asked to build a page in a UI module:
 8. Use `toVxeTableColumns(ResponseSchema...)` for tables.
 9. Use generated services for all backend calls.
 10. Run `gradlew :{ui_module}:ui` when route or SDK regeneration is needed.
+11. Verify generated `router`, `menu`, and `page.json` together when changing route structure or page metadata.
 
 ## 11. Hard Do-Not-Do List
 
 - Do not edit `src/router/routes/modules/*.ts`.
+- Do not edit `src/menus/index.ts` or `src/menus/menu.json`.
+- Do not hand-maintain `src/locales/langs/{lang}/page.json` route keys outside the generator contract.
 - Do not edit generated SDK files under `packages/@sdk/{domain}-{module}/src`.
 - Do not use `fetch`, `axios`, or `requestClient` in business/page code.
 - Do not call `configureApiClient` in page code.
 - Do not use `gridOptions.formConfig` for search forms.
-- Do not use `toAntdTableColumns(...)` for `admin-center` VXE table pages.
+- Do not use `toAntdTableColumns(...)` for VXE table pages.
 - Do not forget `page.currentPage - 1` when building `PageRequest.page`.
 - Do not assume old `items/total` paging shape. Current contract is `data/totalCount`.
 - Do not import `packages/@sdk/{domain}-{module}/src/http.ts` in feature code.
+- Do not put `$t(...)` inside `defineOptions({ meta: { title } })`.
 
 ## 12. One-Line Mental Model
 
