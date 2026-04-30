@@ -14,9 +14,9 @@ Critical rules for AI agents implementing ApiHug projects. Focus on unobvious co
 | Component   | Version                                  |
 |-------------|------------------------------------------|
 | Java        | 18+                                      |
-| Spring Boot | 3.5+                                     |
+| Spring Boot | 4.0+                                     |
 | Spring Data | JDBC (ApiHug extended)                   |
-| ApiHug      | 2.4+ SDK, gradle plugin, proto extension |
+| ApiHug      | 3.0+ SDK, gradle plugin, proto extension |
 | Protobuf    | proto3 + ApiHug extensions               |
 | Frontend    | Vue 3 + Vben Admin + TailwindCSS         |
 | Build       | Gradle 8+ + pnpm                         |
