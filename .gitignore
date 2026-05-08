@@ -176,3 +176,5 @@ Desktop.ini
 .apihug/it-repl.jar
 .apihug/.version
 .apihug/context.json
+.qoder/
+.qwen/

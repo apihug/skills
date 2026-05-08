@@ -43,9 +43,10 @@
 
   <step n="12" goal="Implement frontend task">
 
-    <!-- L2: Load frontend rule -->
     <action>Load COMPLETE rule file: {apihug_impl_front_vben_guide}</action>
-    <critical>HALT if ANY MANDATORY rule violated — See rules file MANDATORY EXECUTION RULES section</critical>
+    <critical>HALT if ANY MANDATORY rule violated - See rules file MANDATORY EXECUTION RULES section</critical>
+    <critical>`vben-expert` MUST be invoked for ALL frontend tasks in this phase. Do not treat it as optional.</critical>
+    <action>Invoke the `vben-expert` skill as the secondary router for Vben component behavior, UI composition, and reference selection</action>
     <critical>PRE-WRITE CHECK: LIST_PAGE? -> Check rules PAGE PATTERNS -> LIST_PAGE</critical>
     <critical>PRE-WRITE CHECK: FORM_PAGE? -> Check rules PAGE PATTERNS -> FORM_PAGE</critical>
     <critical>PRE-WRITE CHECK: DETAIL_PAGE? -> Check rules PAGE PATTERNS -> DETAIL_PAGE</critical>
@@ -54,21 +55,37 @@
     <check if="no incomplete frontend tasks"><goto step="15">Frontend completion</goto></check>
 
     <action>Determine task type: "list page"/"query" -> LIST_PAGE; "form page"/"add/edit" -> FORM_PAGE; "detail page"/"view" -> DETAIL_PAGE; "component" -> COMPONENT</action>
+    <action>Determine one or more frontend sub-modes from the current task and intended UI behavior:
+      - table/grid/search/columns/tree/custom cell/toolbar -> LIST_GRID
+      - field/schema/rules/validation/dependencies/valueFormat -> FORM_SCHEMA
+      - detail/read-only/description/overview/long text display -> DETAIL_PRESENTATION
+      - modal/dialog/popup lifecycle -> MODAL_FLOW
+      - drawer/side panel lifecycle -> DRAWER_FLOW
+      - alert/confirm/prompt/lightweight confirmation -> ALERT_PROMPT
+      - ellipsis/tooltip/expand/overflow text -> ELLIPSIS_TEXT
+      - authority/access/permission/button visibility -> ACCESS_CONTROL
+      - icon/theme/style/look and feel -> THEME_ICON
+      - nearest example or analogous business module needed -> PLAYGROUND_ANALOG
+    </action>
+    <action>Store the result as `frontend_sub_modes[]` and allow multiple matches for the same task, such as `LIST_GRID + MODAL_FLOW + ACCESS_CONTROL`</action>
+    <action>Use `vben-expert` to route the current frontend sub-modes to the minimal required references before writing code</action>
+    <critical>Priority order for decisions: `apihug-impl-front-vben-guide` -> `vben-expert` -> selected reference docs, demos, and playground files</critical>
+    <critical>Never inherit API, SDK, paging, or request-client conventions from generic Vben demos or playground source</critical>
 
     <check if="task type == LIST_PAGE">
       <action>Generate: List page with useVbenVxeGrid, proxyConfig.ajax.query, page index conversion (currentPage - 1)</action>
     </check>
 
     <check if="task type == FORM_PAGE">
-      <action>Generate: Form modal with useVbenForm + useVbenModal, modalApi.lock()/unlock()</action>
+      <action>Generate: Form modal or page with useVbenForm, and when modal is used include modalApi.lock()/unlock()</action>
     </check>
 
     <check if="task type == DETAIL_PAGE">
-      <action>Generate: Detail view with hideInMenu: true, data loading in onMounted</action>
+      <action>Generate: Detail view with hideInMenu: true, data loading in onMounted, and explicit handling for long-text/detail presentation when needed</action>
     </check>
 
     <check if="task type == COMPONENT">
-      <action>Generate: {components_dir}/{{ComponentName}}.vue with Props/Events</action>
+      <action>Generate: {components_dir}/{{ComponentName}}.vue with Props/Events and sub-mode-specific Vben behavior across all matched frontend sub-modes</action>
     </check>
   </step>
 
@@ -86,7 +103,16 @@
   <!-- ==================== -->
 
   <step n="14" goal="Validate and mark frontend task complete">
-    <action>Verify Vue files exist with correct defineOptions and Service imports</action>
+    <action>Verify Vue files exist with correct defineOptions and generated Service imports</action>
+    <action>Load and apply `vben-expert/references/review-checklist.md` for all current frontend sub-modes before marking task complete</action>
+    <action>Verify current implementation still follows `apihug-impl-front-vben-guide` for generated services, schema mapping, paging contract, route metadata, and menu generation boundaries</action>
+    <action if="task type == LIST_PAGE">Verify search form is in `formOptions`, not `gridOptions.formConfig`, and that grid behavior matches all selected Vben sub-modes</action>
+    <action if="task type == FORM_PAGE">Verify field rules, dependencies, valueFormat, and submit lifecycle match all selected Vben sub-modes</action>
+    <action if="frontend_sub_modes contains MODAL_FLOW OR frontend_sub_modes contains DRAWER_FLOW">Verify `setData/getData`, `onOpenChange`, and submit `lock/unlock` lifecycle are correct</action>
+    <action if="frontend_sub_modes contains ALERT_PROMPT">Verify lightweight prompts are used only for lightweight confirmation/input, not as a hidden replacement for full modal forms</action>
+    <action if="frontend_sub_modes contains ELLIPSIS_TEXT OR frontend_sub_modes contains DETAIL_PRESENTATION">Verify long text handling uses truncation, tooltip, or expand behavior intentionally and does not break table or detail readability</action>
+    <action if="frontend_sub_modes contains ACCESS_CONTROL">Verify access behavior is implemented in UI visibility/control points only and does not drift into backend authorization logic</action>
+    <action>Verify any borrowed playground or example pattern was used only for UI composition and did not copy generic API layer conventions into APIHug feature code</action>
     <action>Run: pnpm lint (if configured)</action>
     <action if="lint fails">STOP and fix</action>
 
