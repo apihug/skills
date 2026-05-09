@@ -138,13 +138,14 @@
       <action>Load COMPLETE rule file: {apihug_impl_golden_rule}</action>
       <critical>HALT if ANY MANDATORY rule violated — See rules file MANDATORY EXECUTION RULES section</critical>
       <critical>PRE-WRITE CHECK: ServiceImpl? -> Check rules PARTIALLY GENERATED FILES section</critical>
-      <critical>PRE-WRITE CHECK: Repository? -> Check rules REPOSITORY LAYER patterns</critical>
+      <critical>PRE-WRITE CHECK: Repository? -> Check rules REPOSITORY LAYER hard constraints, forbidden patterns, and review checklist</critical>
       <critical>PRE-WRITE CHECK: Pagination? -> Check rules RESULT and PAGEABLE section</critical>
       <critical>PRE-WRITE CHECK: Error handling? -> Check rules ERROR HANDLING section</critical>
       <critical>PRE-WRITE CHECK: DomainService/Helper? -> Place in {java_path}/domain/{feature}/</critical>
       <critical>NEVER place DomainService or helper services directly under domain/ root — ALWAYS use feature subdirectories</critical>
 
       <action>Run: ./gradlew {module_gradle_module}:wire</action>
+      <action if="task touches Repository trait">Inspect merged generated Repository after wire and validate it against the rules REPOSITORY REVIEW CHECKLIST</action>
       <action>Implement organized by FEATURE:
         - ServiceImpl: {java_path}/api/{Service}ServiceImpl.java (flat, wire-generated)
         - DomainService: {java_path}/domain/{feature}/{Feature}DomainService.java

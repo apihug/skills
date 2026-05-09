@@ -1,58 +1,81 @@
 ---
 name: apihug-impl-front-vben-guide
-description: Current frontend development rules for APIHug Vben UI modules.
-version: 2.2.0
+description: Canonical frontend page-generation rules for APIHug Vben Admin apps.
+version: 3.0.0
 author: APIHug Team / H.O.P.E. Infra
-updated: 2026-04-23
-audience: code agents and frontend developers
+updated: 2026-05-09
+audience: code agents and frontend developers designing and implementing APIHug pages
 ---
 
 # APIHug Frontend Vben Guide
 
-## 1. Purpose
+## 1. Purpose And Authority
 
-This guide is the current rule set for developing pages inside an APIHug UI module.
+This guide is the single source of truth for APIHug frontend page generation.
 
-It describes the real contract between:
+It is written for code agents and frontend implementers who need to:
 
-- the auto router generator
-- the generated SDK package `@sdk/{domain}-{module}`
-- the pre-installed shared module `@hope/api`
-- the pre-installed shared module `@hope/api-antd-adapter`
-- the app wrappers `#/adapter/form` and `#/adapter/vxe-table`
+- design a page before writing code
+- choose an approved page pattern
+- verify backend, i18n, and shared-infrastructure contracts
+- implement the page without inventing local conventions
+- validate the result before marking the task complete
 
-If an older example conflicts with this guide, follow this guide.
+This guide owns frontend policy and contract decisions. If another guide, skill, example, scaffold, or playground file conflicts with this document, follow this document.
 
-## 2. Golden Rules
+## 2. How Code Agents Must Use This Guide
 
-- Edit app code under `apps/{app}/src/**`.
+Use this guide in this order:
+
+1. Load this guide before designing or implementing any frontend task.
+2. Choose the page pattern from `## 8. Page Pattern Decision`.
+3. Run the pre-write checklist in `## 13. Agent Checklists`.
+4. If the page pattern is allowed and all contracts exist, invoke skill `vben-expert`.
+5. Read only the Vben references routed by `vben-expert`.
+6. Implement the page.
+7. Run the final checklist in `## 13. Agent Checklists`.
+8. Reject the implementation if any item in `## 12. Failure Modes` appears.
+
+Skill `vben-expert` is a routing layer. It does not override this guide.
+
+## 3. Scope And Boundaries
+
+This guide applies to generated business pages under:
+
+```text
+apps/{app}/src/views/**
+```
+
+It governs:
+
+- page layout and approved primitives
+- generated SDK and schema usage
+- route metadata expectations
+- i18n completeness
+- sort, reference, hierarchy, and business-code contracts
+- failure conditions that require halting instead of improvising
+
+It does not replace component-level Vben docs. Those are routed internally by skill `vben-expert` and are read only after this guide has approved the pattern.
+
+## 4. Golden Rules
+
+- Edit app code only under `apps/{app}/src/**`.
 - Do not manually edit generated route modules under `apps/{app}/src/router/routes/modules/*.ts`.
-- Do not manually edit generated SDK files under `packages/@sdk/{domain}-{module}/src/api`, `src/types`, `src/model`, or `src/schema`.
+- Do not manually edit generated menu files under `apps/{app}/src/menus/**`.
+- Do not manually edit generated SDK files under `packages/@sdk/{domain}-{module}/src/**`.
 - Do not use `fetch`, `axios`, or `requestClient` in feature code. Use generated services only.
-- Do not call `configureApiClient` in pages or components. App bootstrap already does that.
-- Do not modify any code in `packages/@sdk` (these are generated files).
-- In `admin-center`, use `#/adapter/form` and `#/adapter/vxe-table`.
-- For grid search forms, use `formOptions`. Do not use VXE `formConfig`.
-- For generated schema:
-  - `RequestSchema.*` is for forms and search forms.
-  - `ResponseSchema.*` is for table columns.
-- `PageRequest.page` is zero-based. VXE `page.currentPage` is one-based. Always subtract `1`.
+- Do not call `configureApiClient` in pages or components.
+- Use `#/adapter/form` and `#/adapter/vxe-table` as the local Vben wrappers.
+- Use `RequestSchema.*` for forms and search forms.
+- Use `ResponseSchema.*` for table columns.
+- `PageRequest.page` is zero-based. VXE `page.currentPage` is one-based. Convert exactly once with `page.currentPage - 1`.
+- Treat missing backend, i18n, or shared-infrastructure contracts as stop conditions, not as invitations to improvise page-local workarounds.
 
-## 3. What Is Generated
+## 5. Generated Output And Routing Contracts
 
-### 3.1 Pre-installed vs generated
+### 5.1 What is generated
 
-These modules are pre-installed shared infrastructure and are not generated per app:
-
-- `@hope/api`
-- `@hope/api-antd-adapter`
-
-The generated business SDK is different:
-
-- package import name: `@sdk/{domain}-{module}`
-- filesystem path: `packages/@sdk/{domain}-{module}`
-
-Running `gradlew :{ui_module}:ui` generates these important outputs:
+Running `gradlew :{ui_module}:ui` generates the important frontend outputs:
 
 - `apps/{app}/src/router/routes/modules/*.ts`
 - `apps/{app}/src/menus/index.ts`
@@ -65,22 +88,9 @@ Running `gradlew :{ui_module}:ui` generates these important outputs:
 - `packages/@sdk/{domain}-{module}/src/schema/response/*.ts`
 - `packages/@sdk/{domain}-{module}/src/schema/index.ts`
 
-Meaning:
+Generated outputs are read-only from page code.
 
-- `router/routes/modules/`: generated route modules, grouped by first path segment
-- `menus/index.ts`: generated frontend menu tree using `$t(i18key)`
-- `menus/menu.json`: generated raw menu payload for external/backend usage
-- `locales/langs/{lang}/page.json`: generated page i18n namespace
-- `api/`: generated service methods
-- `types/`: DTO types
-- `model/`: enums, authorities, errors
-- `schema/request/`: neutral `RequestItem[]`
-- `schema/response/`: neutral `ResponseItem[]`
-- `schema/index.ts`: namespace exports `RequestSchema` and `ResponseSchema`
-
-## 4. Routing Rules
-
-### 4.1 Source of truth
+### 5.2 Page discovery and route metadata
 
 Pages are discovered from:
 
@@ -88,113 +98,44 @@ Pages are discovered from:
 apps/{app}/src/views/**/*.vue
 ```
 
-A file is picked up by the router generator only if it contains:
+Every routable page must contain:
 
 ```ts
-defineOptions({ meta: { ... } })
+defineOptions({
+  name: 'StablePageName',
+  meta: {
+    title: 'Static Plain Title',
+  },
+});
 ```
 
-If `meta` is missing, no route is generated for that file.
+Required routing rules:
 
-The generator treats page `defineOptions({ name, meta })` as the single source of truth for:
+- `defineOptions({ name, meta })` is mandatory for routable pages.
+- `meta.title` must be a static string literal.
+- Do not use `$t(...)`, computed expressions, or runtime values in `meta.title`.
+- Give every page a stable unique `name`.
+- `hidden: true` is treated as `hideInMenu: true`.
+- `meta.order` controls route and menu ordering.
+- `meta.path` may override the default path when needed.
 
-- route path and route meta
-- menu title/i18key
-- page locale placeholders under `page.json`
-
-### 4.2 Path mapping
+### 5.3 Path mapping contract
 
 - `views/system/index.vue` -> `/system`
 - `views/system/role.vue` -> `/system/role`
 - `views/system/user/[id].vue` -> `/system/user/:id`
 - `views/system/user/[[id]].vue` -> `/system/user/:id?`
 
-Routes are grouped by the first path segment and written to:
+### 5.4 Route, menu, and page-i18n behavior
 
-```text
-apps/{app}/src/router/routes/modules/{segment}.ts
-```
+Current generator behavior:
 
-Do not maintain those files by hand.
+- route modules, menus, and page i18n are generated from the same discovered page tree
+- routes are grouped by the first path segment
+- generated route and menu titles use `$t(i18key)`
+- `page.json` stores the plain text title authored in `defineOptions`
 
-### 4.3 Required page pattern
-
-Use `defineOptions` and give every page a unique `name`.
-
-Recommended minimum:
-
-```vue
-<script setup lang="ts">
-defineOptions({
-  name: 'RoleList',
-  meta: {
-    title: 'Role Management',
-    icon: 'lucide:shield',
-    order: 10,
-  },
-});
-</script>
-```
-
-Notes:
-
-- `meta.title` should always be set.
-- `meta.i18key` is optional. If omitted, the generator derives one from the page path.
-- `meta.order` controls route/menu ordering.
-- `meta.path` can override the default path when needed.
-- `hidden: true` is treated as `hideInMenu: true`.
-- `meta.title` must be a static string literal. Do not use `$t(...)`, computed values, or runtime expressions in `defineOptions`.
-- Give every page a stable unique `name`. Do not reuse the same `name` across pages.
-
-Good:
-
-```vue
-<script setup lang="ts">
-defineOptions({
-  name: 'KnowledgeDetail',
-  meta: {
-    path: '/operator/knowledge/:id',
-    title: 'Knowledge Detail',
-    hideInMenu: true,
-  },
-});
-</script>
-```
-
-Bad:
-
-```vue
-<script setup lang="ts">
-defineOptions({
-  name: 'KnowledgeDetail',
-  meta: {
-    path: '/operator/knowledge/:id',
-    title: $t('page.operator.knowledge.id.title'),
-  },
-});
-</script>
-```
-
-### 4.4 Current route/menu/i18n contract
-
-Current generator behavior is:
-
-- route modules, menu modules, and page i18n are generated from the same discovered page tree
-- top-level routes are grouped by the first path segment such as `system`, `operator`, `monitoring`
-- menu ordering follows `meta.order`
-- menu visibility follows `hideInMenu` / `hidden`
-- route `meta.title` in generated files is always emitted as `$t(i18key)`
-- `page.json` keeps the actual plain title text
-
-That means the page author writes plain titles in `defineOptions`, while generated outputs transform them into:
-
-- `router`: `meta.title: $t('page.xxx.title')`
-- `menu`: `$t('page.xxx.title')`
-- `i18n`: `"page.xxx.title": "Plain Title"`
-
-### 4.5 Dynamic route i18key rules
-
-Dynamic segments are part of the i18key contract and must not collapse onto the list page key.
+Dynamic segments are part of the i18key contract and must not collapse onto the list-page key.
 
 Examples:
 
@@ -202,26 +143,20 @@ Examples:
 - `/operator/knowledge/:id` -> `page.operator.knowledge.id.title`
 - `/system/user/:id` -> `page.system.user.id.title`
 
-Do not assume `/foo` and `/foo/:id` can share the same i18key.
-
-### 4.6 Locale merge rules
+### 5.5 Locale merge rules for generated page titles
 
 When generating `apps/{app}/src/locales/langs/{lang}/page.json`:
 
-- recurse through all generated children, not only the top-level group nodes
-- preserve existing translated values when the key already exists
-- only add missing placeholders for newly discovered routes
-- keep root group titles stable; do not overwrite them with `null`
+- recurse through all generated children, not only top-level route groups
+- preserve existing translated values
+- add placeholders only for newly discovered routes
+- keep existing root group titles stable
 
-This is important because the generator must be safe to run repeatedly in a real project without destroying hand-edited translations.
+## 6. SDK, HTTP, And Schema Contracts
 
-## 5. HTTP And SDK Rules
+### 6.1 SDK and HTTP ownership
 
-### 5.1 Do not call the HTTP client directly
-
-The app should configure `@hope/api` during bootstrap before feature pages call generated services.
-
-Feature code should only call generated services.
+Feature code must call generated services only.
 
 Good:
 
@@ -239,327 +174,292 @@ import { requestClient } from '#/api/request';
 await requestClient.post('/api/roles/roles', values);
 ```
 
-### 5.2 What `http.ts` is
+`packages/@sdk/{domain}-{module}/src/http.ts` is internal SDK glue. Do not import it directly in feature code.
 
-Each generated SDK package has `src/http.ts`.
+### 6.2 Paging and grid return shape
 
-It is an internal bridge that re-exports helpers from `@hope/api`.
-Generated service files import `../http` so the SDK package stays self-contained.
-
-Feature code should not import `src/http.ts` directly.
-
-### 5.3 Current paging contract
-
-`@hope/api` uses:
+Current paging contract:
 
 ```ts
 interface PageRequest {
   page: number; // zero-based
   size: number;
-}
-
-interface PageableResult<T> {
-  pageIndex: number;
-  pageSize: number;
-  totalCount: number;
-  totalPage: number;
-  data: T[];
+  sort?: string[];
 }
 ```
 
-Generated paged services now correctly accept both request body and page request:
-
-```ts
-RoleService.searchRoles(filters, {
-  page: currentPage - 1,
-  size: pageSize,
-});
-```
-
-### 5.4 Grid return shape
-
-In the default VXE adapter mapping used by this guide, proxy response fields are:
+For standard ApiHug apps, the VXE adapter expects:
 
 - `list: data`
 - `total: totalCount`
 
-That means a grid query can return raw `PageableResult<T>` from the generated service.
+Do not override `proxyConfig.response` in page code. Fix the shared adapter if the envelope is wrong.
 
-Do not reshape it to `items/total` unless your local adapter explicitly uses a different mapping.
+### 6.3 Generated schema contract
 
-## 6. Generated Schema Rules
-
-The generated schema is intentionally neutral.
-
-Do not try to hand-write Vben-only fields into generated SDK files.
-
-Current rule:
-
-- `RequestSchema.*` -> form schema and search form schema
-- `ResponseSchema.*` -> table columns
+Generated schema is intentionally neutral.
 
 Use:
 
 - `toVbenFormSchema(...)` from `@hope/api-antd-adapter`
 - `toVxeTableColumns(...)` from `@hope/api-antd-adapter`
 
-Prefer app-local wrappers for Vben integration:
+Prefer the local wrappers:
 
-- `useVbenForm` from your local form adapter wrapper
-- `useVbenVxeGrid` from your local VXE grid adapter wrapper
+- `useVbenForm` from `#/adapter/form`
+- `useVbenVxeGrid` from `#/adapter/vxe-table`
 
-Do not use `toAntdTableColumns(...)` for VXE table pages.
+Do not edit generated schema files to satisfy one page. Build from schema first, then patch in page code by `fieldName` or `field`.
 
-Current customization surface:
+## 7. Shared Infrastructure And Approved Primitives
 
-- schema hints from backend/generated schema:
-  - `ui.widget`
-  - `ui.props`
-- adapter context:
-  - `t`
-  - `enumLabelPolicy`
-  - `objectMode`
-  - `formatDate`
-- page-level post-processing after `toVbenFormSchema(...)` or `toVxeTableColumns(...)`
+Before generating the first business page in an app, verify the shared layer has the required adapters and renderers. If it does not, add the shared capability first instead of compensating with page-local hacks.
 
-`@hope/api-antd-adapter` does not currently expose a field-specific callback hook such as `onBuildField`, `onBuildColumn`, or `fieldOverrides`.
+### 7.1 Required shared infrastructure
 
-## 7. Current Form And Table Mapping
+Required local adapters:
 
-### 7.1 Request schema -> Vben form
+- `#/adapter/form` exports `useVbenForm`
+- `#/adapter/vxe-table` exports `useVbenVxeGrid`
+- `#/adapter/schema` or equivalent exports schema adapter context and field/column selection helpers
 
-`toVbenFormSchema(RequestSchema.Xxx)` builds Vben-compatible form items using:
+Required shared renderers and helpers:
 
-- `fieldName`
-- `rules`
-- `valueFormat`
-- current app component names
-- `ui.widget` when provided by schema
-- merged `ui.props` into `componentProps`
+- `CellOperation` for standard row actions and destructive-action confirmation
+- `CellTag` for enum/status display
+- `CellSwitch` for confirmed state toggles
 
-Current built-in component names expected by the default Vben form mapping:
+Register shared renderers in the adapter layer, not inside page files.
 
-- `Input`
-- `InputNumber`
-- `Select`
-- `Switch`
-- `Textarea`
-- `Upload`
-- `DatePicker`
-- `RangePicker`
-- `TimePicker`
+### 7.2 Approved primitives
 
-### 7.2 Response schema -> VXE columns
+Use these primitives by default:
 
-`toVxeTableColumns(ResponseSchema.Xxx)` builds VXE-compatible columns using:
+| Concern | Approved primitives |
+| --- | --- |
+| Page shell | `Page` from `@vben/common-ui` |
+| Split layout | `ColPage` from `@vben/common-ui` |
+| List and tree tables | `useVbenVxeGrid` from `#/adapter/vxe-table` |
+| Search and standard forms | `useVbenForm` from `#/adapter/form` |
+| Form mutation surfaces | `useVbenDrawer`, `useVbenModal` |
+| Read-only trace/detail drawer | `Drawer` from `antdv-next` when no submit lifecycle is needed |
+| Tabs | `Tabs` from `antdv-next` |
+| Steps | `Steps` from `antdv-next` |
+| Feedback | `message`, `Modal.confirm`, `Alert`, `Result`, `Spin`, `Empty`, `Fallback` |
+| Monitoring widgets | Vben dashboard components or `Row`, `Col`, `Card`, `Statistic`, `Tabs`, `Spin` |
 
-- `field`
-- `title`
-- `sortable`
-- `formatter`
-- merged `ui.props` into the final column
+Use raw `Table` only for the embedded read-only summary-table exception.
 
-### 7.3 Search form placement
+Use raw `Form` only for approved complex-configuration or diagnostic/test surfaces when schema-driven `useVbenForm` cannot express the control structure cleanly.
 
-For VXE grid pages, the search form belongs in `formOptions`, not in `gridOptions.formConfig`.
+## 8. Page Pattern Decision
 
-## 8. Standard Development Pattern
+Choose the page pattern before writing code.
 
-Replace `@sdk/{domain}-{module}` in the examples below with the actual generated SDK package in your UI module.
+| Task shape | Page pattern | Primary building blocks |
+| --- | --- | --- |
+| Query, filter, maintain rows | List workbench | `Page`, `useVbenVxeGrid`, `formOptions`, row actions, form drawer or modal |
+| Parent-child entity maintenance | Tree table workbench | `Page`, `useVbenVxeGrid`, `treeConfig`, shared tree title renderer |
+| Entity reference selection in a form | Selector or lookup field | `Select`, `TreeSelect`, controlled slot, or lookup modal |
+| Simple create/edit | Form modal | `useVbenModal`, `useVbenForm` |
+| Medium or complex create/edit | Form drawer | `useVbenDrawer`, `useVbenForm` |
+| Multi-section dynamic configuration | Complex configuration form | drawer or modal shell, `Tabs` or menu, schema form where possible |
+| Master-detail configuration | Split configuration page | `ColPage`, panel components, tabs when justified |
+| Audit/log trace | Audit list or trace drawer | `Page`, grid, detail drawer |
+| Permission tree assignment | Form drawer with tree field | `useVbenDrawer`, `useVbenForm`, controlled tree slot |
+| Monitoring dashboard | Dashboard overview | `Page`, `Row`, `Col`, `Card`, `Statistic`, `Tabs`, `Spin` |
+| Read-only entity detail | Detail page | `Page`, `Spin`, `Descriptions`, `Tag`, optional tabs |
+| Trace or audit chain | Trace drawer | `Drawer`, `Spin`, `Timeline`, `Descriptions` |
+| Read-only lookup in modal | Lookup modal | `useVbenModal`, `Spin`, `Descriptions`, `Empty`, optional embedded read-only table |
+| Upload/import | Upload panel | `Upload.Dragger`, `message`, grid for uploaded records with actions |
+| Diagnostic/test panel | Diagnostic workbench | `Page`, `useVbenForm` by default, `Spin`, `Empty`, `Result` |
 
-### 8.1 Normal form page or modal
+After choosing a pattern, use skill `vben-expert` to route to the matching reference docs.
 
-Use request schema to build the form, then submit with the generated service.
+## 9. Design And Implementation Rules
 
-```ts
-import { reactive } from 'vue';
+These rules apply while designing and implementing pages.
 
-import { useVbenForm } from '<local-form-adapter>';
-import { toVbenFormSchema } from '@hope/api-antd-adapter';
-import { RoleService } from '@sdk/{domain}-{module}/api';
-import { RequestSchema } from '@sdk/{domain}-{module}/schema';
+1. Author pages only under `apps/{app}/src/views/**`, with page-local components under that page's `components/` folder.
+2. Do not edit generated route, menu, SDK, or schema files.
+3. List pages use `Page` and `useVbenVxeGrid`.
+4. Search forms use `formOptions.schema` derived from `RequestSchema.*`.
+5. Table columns start from `toVxeTableColumns(ResponseSchema.*)`.
+6. Standard create/edit forms start from `toVbenFormSchema(RequestSchema.*)`.
+7. Backend calls use generated SDK services or a thin app-local adapter that delegates to them.
+8. Do not import `requestClient`, `fetch`, or `axios`.
+9. Convert `PageRequest.page` exactly once at the service-call boundary.
+10. Match schema and column patches by `fieldName` or `field`, never by array index.
+11. Use shared action/status/tree helpers before inventing page-local markup.
+12. Use `formOptions`, not `gridOptions.formConfig`.
+13. Do not override VXE `proxyConfig.response` in a page.
+14. Use `Upload` from `antdv-next` for upload/import workflows.
+15. Use `Tabs` only when the page has real sibling views or modes.
+16. Use `Steps` only for staged workflows.
+17. Use `ColPage` or another existing layout primitive for split pages, not page-local flex shells.
+18. Use confirmation before high-risk mutation and structured result feedback when the business impact is material.
+19. Treat missing shared infrastructure as a shared-layer task, not as a reason to write page-local substitutes.
+20. When a pattern repeats across more than one page, extract the helper into the shared adapter or component layer.
 
-const [Form, formApi] = useVbenForm(
-  reactive({
-    schema: toVbenFormSchema(RequestSchema.CreateRoleRequest),
-    showDefaultActions: false,
-  }),
-);
+## 10. Internationalization And Text Rules
 
-async function handleSubmit() {
-  const { valid } = await formApi.validate();
-  if (!valid) {
-    return;
-  }
-  await RoleService.createRole(await formApi.getValues());
-}
-```
+Missing translations are a generation failure, not a cosmetic issue.
 
-### 8.2 List page with search form and table
+### 10.1 Locale coverage
 
-Use request schema for search, response schema for columns, and return raw `PageableResult<T>` from the service.
+- Discover supported locales from `apps/{app}/src/locales/langs/**`.
+- Every page-level key used by the page must exist in every supported locale.
+- Every selected `RequestSchema.*` field and `ResponseSchema.*` column must have a non-empty locale value for its `i18key` in every supported locale.
+- Generated English `title` values are diagnostics only. They are not acceptable production UI text.
+- Empty-string locale values count as missing.
 
-```ts
-import { useVbenVxeGrid } from '<local-vxe-grid-adapter>';
-import { toVbenFormSchema, toVxeTableColumns } from '@hope/api-antd-adapter';
-import { RoleService } from '@sdk/{domain}-{module}/api';
-import { RequestSchema, ResponseSchema } from '@sdk/{domain}-{module}/schema';
+### 10.2 Visible text
 
-const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    collapsed: false,
-    schema: toVbenFormSchema(RequestSchema.SearchRolesRequest),
-  },
-  gridOptions: {
-    columns: [
-      { type: 'seq', width: 60 },
-      ...toVxeTableColumns(ResponseSchema.RoleSummary),
-      {
-        field: 'action',
-        fixed: 'right',
-        slots: { default: 'action' },
-        width: 160,
-      },
-    ],
-    pagerConfig: {},
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }, formValues) =>
-          await RoleService.searchRoles(formValues, {
-            page: page.currentPage - 1,
-            size: page.pageSize,
-          }),
-      },
-    },
-    toolbarConfig: {
-      search: true,
-    },
-  },
-});
-```
+Use `$t(...)` or schema-adapter i18n for:
 
-### 8.3 Page-specific customization
+- page titles rendered in templates
+- table titles and raw table column titles
+- form labels
+- button text
+- modal and drawer titles
+- confirmation text
+- message text
+- alert and result text
+- tab and step labels
+- upload/import hints
+- descriptions labels
 
-Start from adapter output, then patch it in page code.
-Do not edit generated schema files to satisfy one page.
-To customize one field or one column, generate first, then patch the result in page code.
+Do not hard-code visible English or Chinese text in page code except for static `defineOptions().meta.title`, which remains a route-generator literal.
 
-Good:
+Do not use `tFallback(...)` or equivalent fallback helpers in newly generated page code.
 
-```ts
-const searchSchema = toVbenFormSchema(RequestSchema.SearchRolesRequest).map(
-  (item) =>
-    item.fieldName === 'keyword'
-      ? {
-          ...item,
-          componentProps: {
-            ...item.componentProps,
-            placeholder: 'Search role code or name',
-          },
-        }
-      : item,
-);
-```
+## 11. Domain Contracts For Sort, References, Hierarchy, And Business Codes
 
-```ts
-const formSchema = toVbenFormSchema(RequestSchema.CreateRoleRequest).map((item) =>
-  item.fieldName === 'status'
-    ? {
-        ...item,
-        componentProps: {
-          ...item.componentProps,
-          onChange: (value: string) => console.log(value),
-        },
-      }
-    : item,
-);
-```
+### 11.1 Sort contract
 
-```ts
-const columns = toVxeTableColumns(ResponseSchema.RoleSummary).map((col) =>
-  col.field === 'status'
-    ? {
-        ...col,
-        formatter: ({ cellValue }) => `Status: ${cellValue ?? ''}`,
-      }
-    : col,
-);
-```
+Sortable UI is a backend contract, not a visual guess.
 
-```ts
-const gridColumns = [
-  ...toVxeTableColumns(ResponseSchema.RoleSummary),
-  {
-    field: 'action',
-    title: 'Action',
-    width: 160,
-    slots: { default: 'action' },
-  },
-];
-```
+- Only enable sortable columns when the backend operation supports sort input and the response field maps to a real sortable backend field.
+- For pageable grids, sortable columns must use remote sorting and pass `PageRequest.sort`.
+- Clearing sort must omit `PageRequest.sort`.
+- For non-pageable list or tree endpoints, disable sortable controls unless there is an explicit sort request contract.
+- Do not accept adapter-inferred numeric sorting without contract verification.
 
-Bad:
+### 11.2 Reference-field contract
 
-- editing `packages/@sdk/{domain}-{module}/src/schema/request/*.ts`
-- editing `packages/@sdk/{domain}-{module}/src/schema/response/*.ts`
-- duplicating DTO fields manually in page code
+Reference fields are not generic scalar inputs.
 
-## 9. Optional Adapter Context
+- Do not render user-facing entity references as raw `Input`, `InputNumber`, or typed IDs.
+- Use backend-backed selectors, tree selectors, or lookup modals.
+- Selector labels must show human meaning, not raw IDs only.
+- If the backend has no lookup/search/tree API for the field, stop frontend generation and report the missing contract.
 
-When default mapping is not enough, pass adapter context:
+### 11.3 Hierarchy contract
 
-```ts
-const searchSchema = toVbenFormSchema(RequestSchema.SearchRolesRequest, {
-  t: (key, fallback) => fallback || key,
-  enumLabelPolicy: 'description2',
-  objectMode: 'json',
-});
+Hierarchy maintenance requires hierarchy-aware UI.
 
-const columns = toVxeTableColumns(ResponseSchema.RoleSummary, {
-  formatDate(value) {
-    return value ? String(value) : '';
-  },
-});
-```
+- If the response has `id` plus `parentId` or equivalent hierarchy fields, use a tree table unless the story explicitly calls for a flat audit/search/reporting view.
+- Tree tables must use a non-pageable tree/list SDK method that returns the full hierarchy or full filtered hierarchy.
+- A left-side tree filter does not replace a required hierarchy-aware maintenance grid on the right side.
+- If creation under a parent is supported, expose a row-level create-child or append action.
+- Do not ask users to type a parent ID.
 
-Supported context fields:
+### 11.4 Tenant-scoped business-code contract
 
-- `t`
-- `enumLabelPolicy`
-- `objectMode`
-- `formatDate`
+Business code fields such as `organizationCode`, `departmentCode`, `roleCode`, or other tenant-unique `*Code` identifiers are backend-managed unless the story explicitly defines an import or batch-matching exception.
 
-## 10. What A Code Agent Should Do First
+- Do not make backend-managed business-code fields editable in normal create/edit pages.
+- Display them read-only in lists, details, import previews, and audit output.
+- If create or update schema still requires a non-empty backend-managed business code, stop frontend generation and report the backend contract defect.
+- Do not hide the field and submit empty, placeholder, random, or copied values.
+- This rule does not apply to enum or discriminator fields such as `statusCode` or `typeCode`.
 
-When asked to build a page in a UI module:
+## 12. Styling Rules And Failure Modes
 
-1. Find the local generated SDK package under `packages/@sdk/{domain}-{module}`.
-2. Find the target service in `packages/@sdk/{domain}-{module}/src/api/*.ts`.
-3. Find the matching `RequestSchema` and `ResponseSchema` under `packages/@sdk/{domain}-{module}/src/schema`.
-4. Create the page under `apps/{app}/src/views/...` with `defineOptions({ name, meta })`.
-5. Use `useVbenForm` for standalone forms.
-6. Use `useVbenVxeGrid` for list pages.
-7. Use `toVbenFormSchema(RequestSchema...)` for forms and search forms.
-8. Use `toVxeTableColumns(ResponseSchema...)` for tables.
-9. Use generated services for all backend calls.
-10. Run `gradlew :{ui_module}:ui` when route or SDK regeneration is needed.
-11. Verify generated `router`, `menu`, and `page.json` together when changing route structure or page metadata.
+### 12.1 Styling rules
 
-## 11. Hard Do-Not-Do List
+Generated pages should be style-light.
 
-- Do not edit `src/router/routes/modules/*.ts`.
-- Do not edit `src/menus/index.ts` or `src/menus/menu.json`.
-- Do not hand-maintain `src/locales/langs/{lang}/page.json` route keys outside the generator contract.
-- Do not edit generated SDK files under `packages/@sdk/{domain}-{module}/src`.
-- Do not use `fetch`, `axios`, or `requestClient` in business/page code.
-- Do not call `configureApiClient` in page code.
-- Do not use `gridOptions.formConfig` for search forms.
-- Do not use `toAntdTableColumns(...)` for VXE table pages.
-- Do not forget `page.currentPage - 1` when building `PageRequest.page`.
-- Do not assume old `items/total` paging shape. Current contract is `data/totalCount`.
-- Do not import `packages/@sdk/{domain}-{module}/src/http.ts` in feature code.
-- Do not put `$t(...)` inside `defineOptions({ meta: { title } })`.
+Allowed:
 
-## 12. One-Line Mental Model
+- `Page auto-content-height`
+- `Page` title, description, extra, and footer slots
+- `ColPage` for split layouts
+- Vben form layout props
+- VXE `height: 'auto'`
+- `Row`, `Col`, `Card`, and `Statistic` for monitoring widgets
+- small utility sizing classes when already normal in the app
 
-Route comes from `views`, backend calls come from generated `api`, forms come from `RequestSchema`, tables come from `ResponseSchema`, and page code should only compose those pieces.
+Forbidden in generated pages:
+
+- `<style scoped>`
+- page-level `lang="scss"`
+- `:deep(...)`
+- `.ant-*` internal selector overrides
+- raw CSS to control Vben or Ant internals
+- `ant-design-vue` imports
+- introducing another UI, chart, upload, table, modal, or form library
+
+### 12.2 Failure modes
+
+Reject generated frontend code if any of these appear:
+
+- manual edits to router, menu, SDK, or generated schema output
+- direct use of `requestClient`, `fetch`, or `axios`
+- hard-coded visible text outside static `defineOptions().meta.title`
+- `tFallback(...)` or equivalent fallback helper in new page code
+- missing or empty locale entries for any selected page/schema key
+- raw `Table` used for search, pagination, row actions, mutation, or selection
+- raw `Form` used outside approved complex or diagnostic surfaces
+- search forms built in templates or under `gridOptions.formConfig`
+- page-level `proxyConfig.response` override
+- sortable headers without a verified backend sort contract
+- pageable grid sort UI without `PageRequest.sort`
+- typed-ID reference fields instead of selectors or lookup modals
+- hierarchy maintenance implemented as a flat pageable table without explicit story justification
+- hierarchy maintenance backed only by pageable search data
+- no row-level create-child action where child creation under a selected parent is supported
+- editable backend-managed business-code fields
+- continuing page generation after detecting a required non-empty backend-managed business code input
+- page-local style blocks or deep overrides
+- ad hoc action buttons or status rendering where shared helpers already exist
+- high-risk mutations without confirmation
+- dashboard/detail/trace/result states built with custom CSS instead of approved primitives
+
+## 13. Agent Checklists
+
+### 13.1 Before writing code
+
+- Verify shared infrastructure exists: form adapter, VXE adapter, schema helpers, and shared renderers.
+- Discover supported locale files.
+- Choose the page pattern from `## 8. Page Pattern Decision`.
+- Locate the generated service methods.
+- Locate matching `RequestSchema` and `ResponseSchema`.
+- Verify every selected schema item has a non-empty locale value in every supported locale.
+- Verify the backend sort contract for every sortable column you plan to expose.
+- Identify every reference field and the backend lookup/search/tree method that feeds it.
+- Identify hierarchy fields and verify a non-pageable tree/list SDK method exists when hierarchy maintenance is required.
+- Identify backend-managed business-code fields and confirm frontend input is not required.
+- Plan the page-level locale keys for toolbar actions, titles, confirmation text, messages, results, tabs, steps, and raw table columns.
+- Invoke skill `vben-expert` and read only the routed references.
+
+### 13.2 Before marking the task complete
+
+- No failure mode from `## 12.2` appears.
+- Route metadata is static and route-generator compatible.
+- Search uses `formOptions`.
+- Forms and tables still start from generated schema.
+- Visible text is backed by `$t(...)` or schema-adapter i18n.
+- Sort UI is backed by a real backend sort contract.
+- Reference fields use selectors, tree selectors, or lookup modals.
+- Hierarchy maintenance preserves the hierarchy in the table and uses a non-pageable tree/list call.
+- Create/edit forms omit backend-managed business-code fields.
+- Shared action/status helpers are used where available.
+- Delete, status, and other high-risk actions confirm before mutation.
+- The implementation also passes the `vben-expert` review checklist.
+
+## 14. Routed Vben References
+
+After this guide has approved the page pattern, use skill `vben-expert` to route to the minimum internal Vben references needed for implementation.
+
+Those routed references are implementation support only. They do not replace this guide.

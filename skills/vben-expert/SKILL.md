@@ -1,6 +1,6 @@
 ---
 name: vben-expert
-description: Use when implementing or refining APIHug Vben Admin frontend pages during story execution and you need Vben sub-mode routing for grids, forms, modal or drawer lifecycle, alert or confirm prompts, ellipsis or tooltip text handling, access control, theme or icon work, or playground-based UI analogs. Do not use for API or SDK calling rules; follow the ApiHug frontend Vben guide for those.
+description: Use when implementing or refining APIHug Vben Admin frontend pages during story execution and you need Vben-specific routing to the correct page-pattern docs, component docs, access-control references, or safe playground analogs. This skill does not own frontend policy; the canonical frontend guide does.
 ---
 
 # Vben Expert
@@ -10,154 +10,175 @@ description: Use when implementing or refining APIHug Vben Admin frontend pages 
 This skill is the secondary router for APIHug frontend story execution.
 
 - It MUST be invoked for all frontend tasks inside `apihug-dev-story`.
-- It does not replace the ApiHug frontend guide.
-- It routes the current task to the minimum Vben references needed for implementation.
-- It supports one or more frontend sub-modes for the same task.
+- It is for code agents designing and implementing frontend pages after the canonical frontend guide has approved the page pattern.
+- It routes the task to the minimum Vben references needed for implementation.
+- It may select multiple frontend sub-modes for the same task.
 
 ## Precedence
 
 Always apply frontend decisions in this order:
 
-1. `{project-root}/_bmad/apihug/rules/apihug-impl-front-vben-guide.md`
-2. `vben-expert`
-3. selected reference docs, demos, and playground files
+1. `{project-root}/_bmad/rules/apihug-impl-front-vben-guide.md`
+2. skill `vben-expert`
+3. selected component docs and playground files
 
-If a generic Vben example conflicts with the ApiHug guide, follow the ApiHug guide.
+If a pattern reference, component doc, or playground example conflicts with the canonical frontend guide, the guide wins.
 
 ## Scope
 
 This skill is responsible for:
 
-- Vben component behavior
-- UI interaction patterns
-- modal or drawer lifecycle choices
-- search-form and table composition details
-- lightweight prompt selection
-- long-text display behavior
-- access-control UI patterns
-- picking the nearest safe playground analog
+- selecting the correct Vben component docs
+- choosing between modal, drawer, grid, detail, lookup, and workflow presentation styles
+- picking the nearest safe playground analog when a business-module reference is helpful
+- keeping the implementation aligned with approved Vben behavior
 
 This skill is NOT responsible for:
 
-- generated SDK usage
+- SDK ownership
 - route or menu generation contracts
-- `RequestSchema` and `ResponseSchema` source-of-truth rules
-- paging contract or zero-based page conversion rules
-- any decision involving `@sdk/...`, `@hope/api`, `http.ts`, or `requestClient`
+- schema source-of-truth rules
+- i18n completeness rules
+- sort, reference, hierarchy, or business-code contracts
+- failure-mode ownership
+
+Those belong to `rules/apihug-impl-front-vben-guide.md`.
 
 ## Sub-Mode Routing
 
 Determine one or more frontend sub-modes, then read only the matching references.
 
 | Sub-Mode | Use When | Read |
-|------|------|------|
-| `LIST_GRID` | table, grid, columns, search area, tree table, custom cell, toolbar | `references/components/vben-vxe-table/docs.md` |
+| --- | --- | --- |
+| `LIST_GRID` | pageable list workbench, columns, toolbar, search area | `references/components/vben-vxe-table/docs.md` |
+| `TREE_WORKBENCH` | hierarchy maintenance, tree table, create-child action | `references/components/vben-vxe-table/docs.md`, `references/playground/system-dept/` |
+| `SPLIT_LAYOUT` | left-right work surface, master-detail layout | `references/playground/system-dept/`, `references/playground/system-menu/` |
 | `FORM_SCHEMA` | fields, rules, validation, dependencies, `valueFormat`, schema updates | `references/components/vben-form/docs.md` |
-| `DETAIL_PRESENTATION` | read-only detail, overview block, long text in detail page | `references/components/vben-ellipsis-text/docs.md` when long text is involved |
-| `MODAL_FLOW` | modal dialog lifecycle, submit locking, data injection | `references/components/vben-modal/docs.md` |
-| `DRAWER_FLOW` | drawer lifecycle, side panel editing, state handoff | `references/components/vben-drawer/docs.md` |
-| `ALERT_PROMPT` | lightweight alert, confirm, prompt, one-off interaction | `references/components/vben-alert/docs.md` |
-| `ELLIPSIS_TEXT` | overflow text, tooltip-on-ellipsis, expand or collapse | `references/components/vben-ellipsis-text/docs.md` |
+| `MODAL_FLOW` | modal lifecycle, submit locking, row/context handoff | `references/components/vben-modal/docs.md` |
+| `DRAWER_FLOW` | drawer lifecycle, side-panel editing, state handoff | `references/components/vben-drawer/docs.md` |
+| `DETAIL_PRESENTATION` | detail page, trace view, long text, read-only presentation | `references/components/vben-ellipsis-text/docs.md` when long text is involved |
+| `LOOKUP_MODAL` | read-only lookup or inspect-in-place modal | `references/components/vben-modal/docs.md` |
+| `UPLOAD_IMPORT` | upload, import preview, uploaded-record follow-up flows | `references/components/vben-vxe-table/docs.md`, `references/playground/file-download/` |
+| `DIAGNOSTIC_PANEL` | dry-run, simulation, test panel, result rendering | `references/components/vben-form/docs.md`, `references/components/vben-alert/docs.md` |
+| `RESULT_STATE` | alert, result, loading, empty, fallback states | `references/components/vben-alert/docs.md` |
+| `STEPPED_FLOW` | staged workflow with ordered steps | `references/components/vben-modal/docs.md`, `references/components/vben-drawer/docs.md` |
 | `ACCESS_CONTROL` | route authority, button visibility, `v-access`, `AccessControl` | `references/common/access.md` |
-| `THEME_ICON` | icon choice, visual consistency, theme polish | `references/common/icons.md`, `references/common/theme.md` |
-| `PLAYGROUND_ANALOG` | need the closest business-module interaction analog | `references/playground/system-dept/`, `references/playground/system-menu/`, `references/playground/system-role/`, `references/playground/file-download/` |
+| `THEME_ICON` | icon choice, small visual polish, theme alignment | `references/common/icons.md`, `references/common/theme.md` |
+| `PLAYGROUND_ANALOG` | closest business-module interaction analog is useful | `references/playground/system-dept/`, `references/playground/system-menu/`, `references/playground/system-role/`, `references/playground/file-download/` |
 
 ## Output Contract
 
-After invoking this skill, the agent must determine and keep explicit:
+After invoking this skill, the code agent must keep explicit:
 
+- the chosen page pattern from the canonical guide
 - the selected frontend sub-modes
-- the exact references used for the current task
+- the exact reference files used
 - the concrete Vben behavior points that must be applied
-- any generic example pattern that was rejected because it conflicts with ApiHug rules
+- any example pattern that was rejected because it violates the canonical frontend guide
 
 ## Task Routing Notes
 
-### `LIST_GRID`
+### `LIST_GRID`, `TREE_WORKBENCH`, `SPLIT_LAYOUT`
 
-Use `references/components/vben-vxe-table/docs.md` when you need:
+Read the VXE component docs first, then a playground analog only if the page shape still needs clarification.
 
-- toolbar and table slots
-- search-form behavior
-- tree table configuration
-- custom cell rendering
-- grid API methods such as `query`, `reload`, `setGridOptions`, `toggleSearchForm`
+Use this family for:
 
-### `FORM_SCHEMA`
+- list pages
+- tree tables
+- split pages
+- grid-centric search and action flows
 
-Use `references/components/vben-form/docs.md` when you need:
+Design hints:
 
-- field-level validation rules
-- dynamic show or hide behavior via `dependencies`
-- `valueFormat` for payload transformation
-- `formApi` operations such as `setValues`, `getValues`, `updateSchema`, `setFieldValue`
+- `LIST_GRID`: keep search in `formOptions`, route row actions through one handler, and keep grid lifecycle in the page shell
+- `TREE_WORKBENCH`: use non-pageable tree data and expose row-level create-child or append when required
+- `SPLIT_LAYOUT`: use a left context surface and a right work surface without inventing custom page-shell layout rules
 
-### `MODAL_FLOW` and `DRAWER_FLOW`
+### `FORM_SCHEMA`, `MODAL_FLOW`, `DRAWER_FLOW`
 
-Use `references/components/vben-modal/docs.md` or `references/components/vben-drawer/docs.md` when you need:
+Read the form or modal/drawer docs directly.
 
-- `connectedComponent`
-- `setData(...).open()`
-- `getData()` during open lifecycle
-- submit locking via `lock()` and `unlock()`
-- dynamic state updates through `setState(...)`
+Use this family for:
 
-### `ALERT_PROMPT`
+- create and edit surfaces
+- assignment and configuration forms
+- schema-driven and semi-structured form work
 
-Use `references/components/vben-alert/docs.md` when you need:
+Design hints:
 
-- one-off `alert`, `confirm`, or `prompt` interactions
-- lightweight confirmation without building a full modal component
-- `useAlertContext()` inside custom prompt content
+- `FORM_SCHEMA`: keep schema-driven forms as the default and patch by `fieldName`
+- `MODAL_FLOW`: prefer modal for smaller create/edit surfaces with lower contextual load
+- `DRAWER_FLOW`: prefer drawer when the interaction benefits from more width or richer side-panel context
 
-Prefer modal or drawer for complex forms or multi-step editing.
+### `DETAIL_PRESENTATION`, `LOOKUP_MODAL`
 
-### `ELLIPSIS_TEXT` and `DETAIL_PRESENTATION`
+Read the minimal read-only component docs directly.
 
-Use `references/components/vben-ellipsis-text/docs.md` when you need:
+Use this family for:
 
-- long-text truncation in tables or detail pages
-- tooltip-on-ellipsis behavior
-- click-to-expand text blocks
+- read-only pages
+- trace drawers
+- lookup inspection
+- dashboards and overview surfaces
+
+Design hints:
+
+- treat read-only presentation as read-only, not as a hidden editable form
+- use lookup modal only for inspect-in-place flows
+- use embedded raw tables only for small read-only summaries
+
+### `UPLOAD_IMPORT`, `DIAGNOSTIC_PANEL`, `RESULT_STATE`, `STEPPED_FLOW`
+
+Read the minimal component docs directly and use playground analogs only when needed.
+
+Use this family for:
+
+- upload and import flows
+- diagnostic panels
+- state-heavy pages
+- stepped user journeys
+
+Design hints:
+
+- `UPLOAD_IMPORT`: keep upload trigger and uploaded-record follow-up handling clearly separated
+- `DIAGNOSTIC_PANEL`: use `useVbenForm` by default and extract result rendering when it grows
+- `RESULT_STATE`: prefer approved alert/result/loading/empty primitives instead of custom panels
+- `STEPPED_FLOW`: use staged workflow primitives only when order genuinely matters
 
 ### `ACCESS_CONTROL`
 
-Use `references/common/access.md` for:
-
-- route authority
-- button-level visibility
-- `AccessControl`, `useAccess`, or `v-access`
+Use `references/common/access.md` for UI visibility and interaction-point access control only.
 
 ### `THEME_ICON`
 
-Use `references/common/icons.md` and `references/common/theme.md` for:
-
-- icon selection
-- visual consistency
-- small UI polish within existing product language
+Use `references/common/icons.md` and `references/common/theme.md` for small, local visual decisions inside the existing product language.
 
 ### `PLAYGROUND_ANALOG`
 
-Use playground files only as layout and interaction references:
+Use playground files only as implementation analogs for interaction shape.
 
-- `references/playground/system-dept/`: tree table plus modal CRUD
-- `references/playground/system-menu/`: drawer flow plus field linkage
-- `references/playground/system-role/`: paged table plus permission tree
-- `references/playground/file-download/`: download interaction patterns
+Playground code is never the source of truth for:
+
+- API calling
+- SDK usage
+- paging contracts
+- schema ownership
+- route/menu contracts
 
 ## ApiHug Guardrails
 
-- Do not copy `#/api/*`, `requestClient`, or generic request wrappers from Vben examples.
-- Treat playground source code as UI composition reference, not as ApiHug backend integration reference.
-- Prefer generated `RequestSchema` and `ResponseSchema` first, then patch fields or columns in page code.
-- Keep list-page search forms in `formOptions`, not `gridOptions.formConfig`.
-- Keep paging conversion, service imports, and route metadata aligned with the ApiHug frontend guide.
-- Do not let UI access-control choices drift into backend authorization logic.
+- The canonical guide decides whether a page pattern is allowed.
+- The canonical guide owns shared-infrastructure, i18n, sort, reference, hierarchy, and business-code contracts.
+- `vben-expert` routes references only after those contracts have been checked.
+- Do not copy `#/api/*`, `requestClient`, or generic request wrappers from demos or playgrounds.
+- Prefer generated `RequestSchema` and `ResponseSchema` first, then page-level patches.
+- Use pattern docs to shape code, not to bypass guide-level constraints.
 
 ## Completion Gate
 
-Before marking a frontend task complete, read and apply:
+Before marking a frontend task complete:
 
-- `references/review-checklist.md`
-
-Use the checklist with all current sub-modes and confirm the implementation still follows ApiHug frontend rules.
+1. Apply `references/review-checklist.md`.
+2. Re-check the failure modes in `rules/apihug-impl-front-vben-guide.md`.
+3. Confirm the implementation still follows the canonical guide.
